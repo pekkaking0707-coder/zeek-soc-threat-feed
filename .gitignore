@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files
+datasets/*.pcap
+datasets/*.pcapng
+*.log
+alerts.jsonl
+
+# Virtual environments
+.venv/
+venv/
+
+# Ollama models
+.ollama/
+
+# Test outputs
+*.pcap
+*.pcapng
+alerts.jsonl
+*.jsonl
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/

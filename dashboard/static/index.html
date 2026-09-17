@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zeek SOC Threat Feed — Live Dashboard</title>
+<style>
+  body { font-family: Consolas, monospace; background: #0d1117; color: #c9d1d9; margin: 24px; }
+  h1 { font-size: 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #30363d; padding: 6px 8px; text-align: left; }
+  th { background: #161b22; }
+  .s5 { color: #f85149; font-weight: bold; }
+  .s4 { color: #ff7b54; } .s3 { color: #d29922; } .s2 { color: #58a6ff; } .s1 { color: #8b949e; }
+  .st-ready { color: #3fb950; } .st-template { color: #d29922; } .st-pending { color: #8b949e; }
+</style>
+</head>
+<body>
+<h1>Zeek SOC Threat Feed — Live Dashboard</h1>
+<table id="tbl">
+  <thead><tr><th>Time</th><th>Flow</th><th>Class</th><th>Sev</th><th>Conf</th><th>Briefing</th><th>Evidence</th></tr></thead>
+  <tbody></tbody>
+</table>
+<script>
+const tbody = document.querySelector("#tbl tbody");
+function row(a) {
+  const tr = document.createElement("tr");
+  const ev = a.supporting_evidence.map(e => `${e.feature}=${e.value}`).join("; ");
+  tr.innerHTML = `<td>${a.timestamp}</td><td>${a.flow_id}</td>
+    <td>${a.threat_class}</td><td class="s${a.severity}">${a.severity}</td>
+    <td>${a.confidence_score}</td>
+    <td class="st-${a.briefing_status}">${a.briefing_status}</td>
+    <td>${ev}</td>`;
+  tbody.prepend(tr);
+}
+const ws = new WebSocket(`ws://${location.host}/ws`);
+ws.onmessage = (m) => row(JSON.parse(m.data));
+</script>
+</body>
+</html>
