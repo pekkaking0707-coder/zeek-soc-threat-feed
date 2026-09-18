@@ -1,5 +1,5 @@
-# SIH26145 Windows host setup — detectors dev, dashboard, local LLM
-# Run from the sih26145 folder:  powershell -ExecutionPolicy Bypass -File setup_windows.ps1
+# Zeek SOC Threat Feed — Windows host setup
+# Run from the project root:  powershell -ExecutionPolicy Bypass -File setup_windows.ps1
 
 $ErrorActionPreference = "Continue"
 Write-Host "== [1/4] Python packages ==" -ForegroundColor Cyan

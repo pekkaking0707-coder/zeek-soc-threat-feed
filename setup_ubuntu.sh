@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SIH26145 Ubuntu VM setup — capture, replay, attack tools (run inside the VM)
+# Zeek SOC Threat Feed — Ubuntu VM setup (run inside the VM)
 # Usage: sudo ./setup_ubuntu.sh
 set -uo pipefail
 
@@ -21,7 +21,7 @@ apt has no zeek package on this release. Pick ONE:
      echo 'deb http://download.opensuse.org/repositories/security:/zeek/xUbuntu_22.04/ /' > /etc/apt/sources.list.d/zeek.list
      curl -fsSL https://download.opensuse.org/repositories/security:/zeek/xUbuntu_22.04/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/zeek.gpg
      apt update && apt install -y zeek
-  B) Docker fallback:  docker pull zeek/zeek-lts   (run with --net=host -v $(pwd):/logs)
+  B) Docker fallback:  docker pull zeek/zeek-lts   (run with --net=host -v $(pwd):/workdir)
 See BUILD_GUIDE.md section 3.3.
 EOF
   fi
@@ -39,7 +39,7 @@ if ! command -v goflow2 >/dev/null 2>&1; then
     || echo "WARN: goflow2 download failed - grab the binary from github.com/netsampler/goflow2/releases"
 fi
 
-echo "== [4/4] dnscat2 (optional, PS-named tunnelling tool) =="
+echo "== [4/4] dnscat2 (optional, tunneling tool) =="
 if [ ! -d /opt/dnscat2 ]; then
   git clone --depth 1 https://github.com/iagox86/dnscat2 /opt/dnscat2 2>/dev/null \
     && (cd /opt/dnscat2/server && gem install bundler:2.4.22 && bundle install) \
@@ -48,7 +48,7 @@ fi
 
 echo
 echo "== Phase A acceptance checks (BUILD_GUIDE.md section 5) =="
-echo "1) veth topology:     sudo bash benchmarks/topology_veth.sh"
+echo "1) veth topology:     sudo bash benchmarks/topology_veth.sh up"
 echo "2) capture check:     zeek -i veth-t local   (in another shell)"
-echo "3) replay:            tcpreplay-edit --intf1=veth-t --topspeed datasets/beaconing.pcap"
+echo "3) replay:            tcpreplay-edit --intf1=veth-a --topspeed datasets/beaconing.pcap"
 echo "4) confirm dns.log/conn.log rows appear, then Ctrl-C zeek"
