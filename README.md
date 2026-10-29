@@ -4,6 +4,8 @@ A streaming, read-only threat-detection pipeline for mirrored network traffic. I
 
 ## Architecture Overview
 
+![System architecture — Zeek SOC Threat Feed & LLM triage pipeline](docs/architecture.png)
+
 ```
 [ Network Mirror / Diode ] → [ Zeek / goflow2 Ingest ] → [ Feature Extraction ]
                                                           │
