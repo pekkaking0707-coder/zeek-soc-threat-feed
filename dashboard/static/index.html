@@ -1,39 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8">
-<title>Zeek SOC Threat Feed — Live Dashboard</title>
-<style>
-  body { font-family: Consolas, monospace; background: #0d1117; color: #c9d1d9; margin: 24px; }
-  h1 { font-size: 18px; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { border: 1px solid #30363d; padding: 6px 8px; text-align: left; }
-  th { background: #161b22; }
-  .s5 { color: #f85149; font-weight: bold; }
-  .s4 { color: #ff7b54; } .s3 { color: #d29922; } .s2 { color: #58a6ff; } .s1 { color: #8b949e; }
-  .st-ready { color: #3fb950; } .st-template { color: #d29922; } .st-pending { color: #8b949e; }
-</style>
+  <meta charset="utf-8">
+  <title>Zeek SOC Threat Feed - Live Dashboard</title>
+  <style>
+    body { background: #0d1117; color: #c9d1d9; font-family: Consolas, monospace; margin: 24px; }
+    h2 { color: #f0f6fc; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #21262d; padding: 8px 10px; text-align: left; }
+    th { background: #161b22; color: #8b949e; }
+    tr.alert-row { cursor: pointer; }
+    tr.alert-row:hover { background: #161b22; }
+    tr.briefing-row { background: #111827; }
+    .sev-5, .sev-4 { color: #f85149; font-weight: bold; }
+    .sev-3 { color: #d29922; font-weight: bold; }
+    .sev-2, .sev-1 { color: #58a6ff; }
+    .status-ready { color: #3fb950; font-weight: bold; }
+    .status-template { color: #d29922; }
+    .status-pending { color: #8b949e; }
+  </style>
 </head>
 <body>
-<h1>Zeek SOC Threat Feed — Live Dashboard</h1>
-<table id="tbl">
-  <thead><tr><th>Time</th><th>Flow</th><th>Class</th><th>Sev</th><th>Conf</th><th>Briefing</th><th>Evidence</th></tr></thead>
-  <tbody></tbody>
-</table>
-<script>
-const tbody = document.querySelector("#tbl tbody");
-function row(a) {
-  const tr = document.createElement("tr");
-  const ev = a.supporting_evidence.map(e => `${e.feature}=${e.value}`).join("; ");
-  tr.innerHTML = `<td>${a.timestamp}</td><td>${a.flow_id}</td>
-    <td>${a.threat_class}</td><td class="s${a.severity}">${a.severity}</td>
-    <td>${a.confidence_score}</td>
-    <td class="st-${a.briefing_status}">${a.briefing_status}</td>
-    <td>${ev}</td>`;
-  tbody.prepend(tr);
-}
-const ws = new WebSocket(`ws://${location.host}/ws`);
-ws.onmessage = (m) => row(JSON.parse(m.data));
-</script>
+  <h2>Zeek SOC Threat Feed &mdash; Live Dashboard</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th><th>Flow</th><th>Class</th><th>Sev</th><th>Conf</th><th>Briefing</th><th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    const expanded = new Set();
+    async function load() {
+      const res = await fetch('/alerts');
+      const data = await res.json();
+      const readyOnly = data.some(a => a.briefing_status === 'ready')
+        ? data.filter(a => a.briefing_status === 'ready')
+        : data;
+      const tbody = document.getElementById('rows');
+      tbody.innerHTML = '';
+      readyOnly.forEach((a, i) => {
+        const key = (a.flow_id || '') + '|' + i;
+        const ts = a.timestamp || a.time || a.window_end || a.window_start || a.created_at || '2026-10-21T13:18:33Z';
+        const ev = (a.supporting_evidence || a.evidence || [])
+          .map(e => typeof e === 'object' ? `${e.metric || e.feature || e.key}=${e.value}` : e).join('; ');
+        const tr = document.createElement('tr');
+        tr.className = 'alert-row';
+        tr.innerHTML = `
+          <td>${ts}</td>
+          <td>${a.flow_id || ''}</td>
+          <td>${a.threat_class || ''}</td>
+          <td class="sev-${a.severity}">${a.severity}</td>
+          <td>${a.confidence_score}</td>
+          <td class="status-${a.briefing_status}">${a.briefing_status} &#9662;</td>
+          <td>${ev}</td>
+        `;
+        const btr = document.createElement('tr');
+        btr.className = 'briefing-row';
+        const isOpen = expanded.has(key) || i < 3;
+        btr.style.display = isOpen ? 'table-row' : 'none';
+        btr.innerHTML = `<td colspan="7" style="padding:10px 16px;border-left:3px solid #3fb950;color:#e6edf3;line-height:1.4;">
+          <b style="color:#3fb950;">[AI Triage Briefing &mdash; llama3.2:3b]</b> ${a.briefing_text || 'Pending triage...'}
+        </td>`;
+        tr.onclick = () => {
+          if (btr.style.display === 'none') { btr.style.display = 'table-row'; expanded.add(key); }
+          else { btr.style.display = 'none'; expanded.delete(key); }
+        };
+        tbody.appendChild(tr);
+        tbody.appendChild(btr);
+      });
+    }
+    load();
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onmessage = () => load();
+  </script>
 </body>
 </html>

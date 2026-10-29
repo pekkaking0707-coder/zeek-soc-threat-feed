@@ -150,7 +150,6 @@ async def triage_worker():
                         # Convert to Alert model for LLM
                         alert_obj = AlertModel.model_validate(alert)
                         # Run LLM in thread pool to avoid blocking
-                        import asyncio
                         loop = asyncio.get_event_loop()
                         briefing = await loop.run_in_executor(
                             None, lambda: narrate(alert_obj)
@@ -163,7 +162,6 @@ async def triage_worker():
                         _update_alert_in_store(key, updates)
                         # Broadcast update
                         updated = alerts_store[key]
-                        import asyncio
                         await asyncio.gather(*(
                             c.send_json(updated) for c in list(clients)
                         ), return_exceptions=True)
